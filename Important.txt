@@ -1,0 +1,10 @@
+jenkins - how will trigger - webhook - polling
+
+jenkins read jenkins file - build,  test, build docker image (sh docker build -t) - push to docker hub (sh docker push akila/app:v1) - deploy k8s (sh kubectl apply -f deployment.yaml)
+
+In project when dev push code - jenkins pipeline triggered automatically, it build the appln, create Docker image, push to docker hub
+ans using kubectl command jenkin deploys the updated image to k8s cluster
+
+Jenkin is ci and cd tool because it automatically build, test when developer push chnages. but it also supports cd by automating deployments to server like ec2 or k8s.
+
+jenkin can run on single ec2

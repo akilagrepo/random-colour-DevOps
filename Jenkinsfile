@@ -2,72 +2,61 @@ pipeline {
     agent any
 
     environment {
-        DOCKER_IMAGE = "abineshkumar/react-random"
-        DOCKER_CREDENTIALS_ID = "docker-hub-credentials"
-        AWS_CREDENTIALS_ID = "aws-eks-credentials"
-        AWS_REGION = "us-east-1"
-        EKS_CLUSTER = "react-app"
+        DOCKER_IMAGE = "akilapradeep/react-random"
+        DOCKER_CREDENTIALS_ID = "akila-docker-hub-credentials"
+        CONTAINER_NAME = "react-app"
+        PORT = "80"
     }
 
     stages {
+
         stage('Clone Repository') {
             steps {
-                script {
-                    sh '''
-                    rm -rf random-colour-DevOps || true
-                    git clone https://github.com/abineshkumar94/random-colour-DevOps.git
-                    cd random-colour-DevOps
-                    git reset --hard origin/main
-                    '''
-                }
+                sh '''
+                rm -rf random-colour-DevOps || true
+                git clone https://github.com/akilagrepo/random-colour-DevOps.git
+                '''
             }
         }
 
         stage('Install Dependencies & Build React App') {
             steps {
-                script {
-                    sh '''
-                    cd random-colour-DevOps
-                    npm install
-                    npm run build
-                    '''
-                }
+                sh '''
+                cd random-colour-DevOps
+                npm install
+                npm run build
+                '''
             }
         }
 
         stage('Build Docker Image') {
             steps {
-                script {
-                    sh """
-                    cd random-colour-DevOps
-                    export DOCKER_BUILDKIT=1
-                    docker build -t $DOCKER_IMAGE .
-                    """
-                }
+                sh '''
+                cd random-colour-DevOps
+                docker build -t $DOCKER_IMAGE .
+                '''
             }
         }
 
         stage('Push Docker Image to Docker Hub') {
             steps {
-                script {
-                    withDockerRegistry([credentialsId: DOCKER_CREDENTIALS_ID, url: "https://index.docker.io/v1/"]) {
-                        sh "docker push $DOCKER_IMAGE"
-                    }
+                withDockerRegistry([credentialsId: DOCKER_CREDENTIALS_ID, url: "https://index.docker.io/v1/"]) {
+                    sh "docker push $DOCKER_IMAGE"
                 }
             }
         }
 
-        stage('Deploy to AWS EKS') {
+        stage('Deploy on EC2 (Run Container)') {
             steps {
-                script {
-                    withCredentials([aws(credentialsId: AWS_CREDENTIALS_ID, region: AWS_REGION)]) {
-                        sh """
-                        aws eks --region $AWS_REGION update-kubeconfig --name $EKS_CLUSTER
-                        kubectl apply -f random-colour-DevOps/k8s/deployment.yaml
-                        kubectl rollout status deployment/react-app
-                        """
-                    }
-                }
+                sh '''
+                docker stop $CONTAINER_NAME || true
+                docker rm $CONTAINER_NAME || true
+
+                docker run -d \
+                  --name $CONTAINER_NAME \
+                  -p 80:80 \
+                  $DOCKER_IMAGE
+                '''
             }
         }
     }
@@ -81,5 +70,3 @@ pipeline {
         }
     }
 }
-
-
