@@ -12,7 +12,15 @@ pipeline {
         nodejs 'Node18'
     }
 
-    stages {
+
+        stage('Test Docker Hub Login') {
+            steps {
+                withDockerRegistry([credentialsId: 'akila-docker-hub-credentials', url: 'https://index.docker.io/v1/']) {
+                sh 'docker login -u $DOCKER_USER -p $DOCKER_PASS'
+                sh 'docker info'
+                }
+            }
+        }
 
         stage('Clone Repository') {
             steps {
