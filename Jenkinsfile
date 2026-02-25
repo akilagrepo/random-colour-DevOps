@@ -9,18 +9,10 @@ pipeline {
     }
 
     tools {
-        nodejs 'Node18'
+        nodejs 'Node18'   // Make sure Node18 tool is configured in Jenkins
     }
 
     stages {
-        stage('Test Docker Hub Login') {
-            steps {
-                withDockerRegistry([credentialsId: 'akila-docker-hub-credentials', url: 'https://index.docker.io/v1/']) {
-                    sh 'docker login -u $DOCKER_USER -p $DOCKER_PASS'
-                    sh 'docker info'
-                }
-            }
-        }
 
         stage('Clone Repository') {
             steps {
@@ -52,8 +44,15 @@ pipeline {
 
         stage('Push Docker Image to Docker Hub') {
             steps {
-                withDockerRegistry([credentialsId: DOCKER_CREDENTIALS_ID, url: "https://index.docker.io/v1/"]) {
-                    sh "docker push $DOCKER_IMAGE"
+                withCredentials([usernamePassword(
+                    credentialsId: "$DOCKER_CREDENTIALS_ID",
+                    usernameVariable: 'DOCKER_USER',
+                    passwordVariable: 'DOCKER_PASS'
+                )]) {
+                    sh '''
+                    echo $DOCKER_PASS | docker login -u $DOCKER_USER --password-stdin
+                    docker push $DOCKER_IMAGE
+                    '''
                 }
             }
         }
@@ -61,12 +60,14 @@ pipeline {
         stage('Deploy on EC2 (Run Container)') {
             steps {
                 sh '''
+                # Stop old container if exists
                 docker stop $CONTAINER_NAME || true
                 docker rm $CONTAINER_NAME || true
 
+                # Run new container
                 docker run -d \
                   --name $CONTAINER_NAME \
-                  -p 80:80 \
+                  -p $PORT:80 \
                   $DOCKER_IMAGE
                 '''
             }
@@ -75,10 +76,10 @@ pipeline {
 
     post {
         success {
-            echo "🚀 Deployment successful!"
+            echo "🚀 Deployment successful! Your app should be running on port $PORT"
         }
         failure {
-            echo "❌ Deployment failed. Check logs."
+            echo "❌ Deployment failed. Check the logs above."
         }
     }
 }
