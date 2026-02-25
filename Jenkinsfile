@@ -8,6 +8,10 @@ pipeline {
         PORT = "80"
     }
 
+     tools {
+        nodejs 'Node18'
+    }
+
     stages {
 
         stage('Clone Repository') {
