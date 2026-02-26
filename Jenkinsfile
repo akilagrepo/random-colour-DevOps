@@ -9,7 +9,7 @@ pipeline {
     }
 
     tools {
-        nodejs 'Node18'   // Make sure Node18 tool is configured in Jenkins
+        nodejs 'Node18'// Make sure Node18 tool is configured in Jenkins
     }
 
     stages {
