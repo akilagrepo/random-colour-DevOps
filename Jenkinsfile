@@ -2,7 +2,7 @@ pipeline {
     agent any
 
     environment {
-        DOCKER_IMAGE = "akilapradeep/react-random"
+        DOCKER_IMAGE = "akilapradeep/react-jenkins"
         DOCKER_CREDENTIALS_ID = "akila-docker-hub-credentials"
         CONTAINER_NAME = "react-app"
         PORT = "80"
